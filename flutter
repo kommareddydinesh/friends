@@ -323,3 +323,77 @@ class ResultPage extends StatelessWidget {
     );
   }
 }
+
+
+
+ex-6
+import 'package:flutter/material.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+void main() {
+  runApp(MaterialApp(home: StudentPage()));
+}
+class StudentPage extends StatefulWidget {
+  @override
+  State<StudentPage> createState() => _StudentPageState();
+}
+class _StudentPageState extends State<StudentPage> {
+  Database? db;
+  final name = TextEditingController();
+  List<Map<String, dynamic>> students = [];
+  Future<void> createDB() async {
+    db = await openDatabase(
+      join(await getDatabasesPath(), 'student.db'),
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute(
+          'CREATE TABLE students(id INTEGER PRIMARY KEY, name TEXT)'
+        );
+      },
+    );
+  }
+  Future<void> insertStudent() async {
+    await db!.insert('students', {
+      'name': name.text,
+    });
+    loadStudents();
+  }
+  Future<void> loadStudents() async {
+    students = await db!.query('students');
+    setState(() {});
+  }
+  @override
+  void initState() {
+    super.initState();
+    createDB();
+  }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("SQLite Students")),
+      body: Column(
+        children: [
+          TextField(
+            controller: name,
+            decoration: InputDecoration(labelText: "Student Name"),
+          ),
+          ElevatedButton(
+            onPressed: insertStudent,
+            child: Text("Save"),
+          ),
+          ElevatedButton(
+            onPressed: loadStudents,
+            child: Text("View Students"),
+          ),
+          Expanded(
+            child: ListView(
+              children: students.map((s) =>
+                ListTile(title: Text(s['name']))
+              ).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
